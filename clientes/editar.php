@@ -1,5 +1,6 @@
 <?php
 include("../includes/header.php");
+requiereRol([ROL_ADMIN, ROL_GERENTE]);
 include("../conexion.php");
 $db = (new Cconexion())->conexionBD();
 $id = intval($_GET['id'] ?? 0);

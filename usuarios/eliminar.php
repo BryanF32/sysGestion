@@ -1,4 +1,5 @@
 <?php
+include("../includes/auth.php");
 include("../conexion.php");
 $db = (new Cconexion())->conexionBD();
 $id = intval($_GET['id'] ?? 0);

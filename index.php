@@ -1,10 +1,9 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 include("includes/header.php");
 include("conexion.php");
 $db = (new Cconexion())->conexionBD();
 
+// Stats
 $total_proyectos = $db->query("SELECT COUNT(*) FROM proyectos")->fetchColumn();
 $proyectos_activos = $db->query("SELECT COUNT(*) FROM proyectos WHERE estado = 'en_progreso'")->fetchColumn();
 $total_tareas = $db->query("SELECT COUNT(*) FROM tareas")->fetchColumn();
@@ -13,11 +12,34 @@ $total_horas = $db->query("SELECT ISNULL(SUM(horas_trabajadas),0) FROM registro_
 $total_gastos = $db->query("SELECT ISNULL(SUM(monto),0) FROM gastos")->fetchColumn();
 $total_presupuesto = $db->query("SELECT ISNULL(SUM(presupuesto),0) FROM proyectos")->fetchColumn();
 
-$proyectos_rec = $db->query("SELECT TOP 5 p.id, p.nombre, p.estado, p.prioridad, p.porcentaje_avance, p.fecha_fin, c.nombre AS cliente FROM proyectos p LEFT JOIN clientes c ON p.cliente_id = c.id ORDER BY p.creado_en DESC")->fetchAll(PDO::FETCH_ASSOC);
+// Proyectos recientes
+$proyectos_rec = $db->query("
+    SELECT TOP 5 p.id, p.nombre, p.estado, p.prioridad, p.porcentaje_avance,
+           p.fecha_fin, c.nombre AS cliente
+    FROM proyectos p
+    LEFT JOIN clientes c ON p.cliente_id = c.id
+    ORDER BY p.creado_en DESC
+")->fetchAll(PDO::FETCH_ASSOC);
 
-$tareas_rec = $db->query("SELECT TOP 5 t.nombre, t.estado, t.prioridad, p.nombre AS proyecto, u.nombre + ' ' + u.apellido AS asignado FROM tareas t LEFT JOIN proyectos p ON t.proyecto_id = p.id LEFT JOIN usuarios u ON t.asignado_a = u.id ORDER BY t.creado_en DESC")->fetchAll(PDO::FETCH_ASSOC);
+// Tareas recientes
+$tareas_rec = $db->query("
+    SELECT TOP 5 t.nombre, t.estado, t.prioridad,
+           p.nombre AS proyecto,
+           u.nombre + ' ' + u.apellido AS asignado
+    FROM tareas t
+    LEFT JOIN proyectos p ON t.proyecto_id = p.id
+    LEFT JOIN usuarios u ON t.asignado_a = u.id
+    ORDER BY t.creado_en DESC
+")->fetchAll(PDO::FETCH_ASSOC);
 
-$gastos_proyecto = $db->query("SELECT TOP 5 p.nombre AS proyecto, SUM(g.monto) AS total FROM gastos g JOIN proyectos p ON g.proyecto_id = p.id GROUP BY p.nombre ORDER BY total DESC")->fetchAll(PDO::FETCH_ASSOC);
+// Gastos por proyecto (top 5)
+$gastos_proyecto = $db->query("
+    SELECT TOP 5 p.nombre AS proyecto, SUM(g.monto) AS total
+    FROM gastos g
+    JOIN proyectos p ON g.proyecto_id = p.id
+    GROUP BY p.nombre
+    ORDER BY total DESC
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="page-header">
@@ -63,7 +85,15 @@ $gastos_proyecto = $db->query("SELECT TOP 5 p.nombre AS proyecto, SUM(g.monto) A
                     <div class="empty-state">◉ <p>No hay proyectos aún</p></div>
                 <?php else: ?>
                 <table>
-                    <thead><tr><th>Proyecto</th><th>Cliente</th><th>Estado</th><th>Avance</th><th>Vence</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Proyecto</th>
+                            <th>Cliente</th>
+                            <th>Estado</th>
+                            <th>Avance</th>
+                            <th>Vence</th>
+                        </tr>
+                    </thead>
                     <tbody>
                     <?php foreach ($proyectos_rec as $p): ?>
                         <tr>
@@ -95,7 +125,9 @@ $gastos_proyecto = $db->query("SELECT TOP 5 p.nombre AS proyecto, SUM(g.monto) A
                     <div class="empty-state">◎ <p>No hay tareas aún</p></div>
                 <?php else: ?>
                 <table>
-                    <thead><tr><th>Tarea</th><th>Proyecto</th><th>Asignado</th><th>Estado</th><th>Prioridad</th></tr></thead>
+                    <thead>
+                        <tr><th>Tarea</th><th>Proyecto</th><th>Asignado</th><th>Estado</th><th>Prioridad</th></tr>
+                    </thead>
                     <tbody>
                     <?php foreach ($tareas_rec as $t): ?>
                         <tr>
@@ -119,9 +151,11 @@ $gastos_proyecto = $db->query("SELECT TOP 5 p.nombre AS proyecto, SUM(g.monto) A
             <?php if (empty($gastos_proyecto)): ?>
                 <div class="empty-state">◈ <p>Sin gastos registrados</p></div>
             <?php else: ?>
-                <?php $max = max(array_column($gastos_proyecto, 'total'));
+                <?php
+                $max = max(array_column($gastos_proyecto, 'total'));
                 foreach ($gastos_proyecto as $g):
-                    $pct = $max > 0 ? ($g['total'] / $max * 100) : 0; ?>
+                    $pct = $max > 0 ? ($g['total'] / $max * 100) : 0;
+                ?>
                 <div style="margin-bottom:14px;">
                     <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
                         <span style="font-size:12px;color:var(--text2)"><?= htmlspecialchars($g['proyecto']) ?></span>

@@ -1,5 +1,6 @@
 <?php
 include("../includes/header.php");
+requiereRol([ROL_ADMIN]);
 include("../conexion.php");
 $db = (new Cconexion())->conexionBD();
 
